@@ -1,4 +1,4 @@
-/* ------------------------------------------------------- Coding Challenge 7 */
+/* --------------------------- Coding Challenge 7 --------------------------- */
 // Aurthor: Ngozi Young
 // Date: 11/16/2019
 // Description: Wrtie a program using Javascript that does the following:
@@ -16,83 +16,99 @@
 // 8. The program should prompt for the next random question after a question is answered so that the game never ends.
 // The program will display the same questions more than once.
 // 9. The user can quit the game by entering "exit" in the prompt field. The case sensitivity does not matter.
-// 10. The program will track and then display the score in the console. 1 point is given for each correct answers
-// Could use the "power of closures" for this but did not make sense to me to do so.
+// 10. The program will using the power of "closures" to track and then display the score in the console. 1 point is given for each correct answers
 
 /* The entire code is wrapped in Immediately Invoked Function Expressions (IIFE) to keep this entire code private
    This annonymous code is always immediately invoked by the (); at the end of this code. */
 (function () {
 
   //Function constructor to define properties of a question
-  var Question = function(question, correctAnswer, answerChoices) {
+  function Question(question, answers, correctAnswer) {
     this.question = question;
+    this.answers = answers;
     this.correctAnswer = correctAnswer;
-    this.answerChoices = answerChoices;
-  };
-
-  //Created a few questions using the function constructor, Question()
-  var nextQuestion, answerChoices;
-  nextQuestion = [];
-
-  answerChoices = ['Purple', 'Black', 'Blue', 'Green'];
-  nextQuestion[0] = new Question('What is the color of the afternoon sky?', 2, answerChoices);
-
-  answerChoices = ['Apple', 'Google', 'Samsung'];
-  nextQuestion[1] = new Question('What is the brand name of an iPhone?', 0, answerChoices);
-
-  answerChoices = [2, 30, 10, 16, 18];
-  nextQuestion[2] = new Question('What is the legal age to drive a car?', 3, answerChoices);
-
-  answerChoices = ['Whale', 'Dog', 'Snake', 'Mosquitoe', 'Goat'];
-  nextQuestion[3] = new Question('Which of the following is man\'s best friend?', 1, answerChoices);
-
-  var questionNum // question number selector
-  var score = 0;
-
-  // Selects question at random
-  questionNum = randomQuestionSelector();
-  //Let the game begin!
-  prompter();
-
-  //Function to display prompt and display next random question
-  function prompter() {
-    console.log(nextQuestion[questionNum].question);
-    for(var i=0; i<nextQuestion[questionNum].answerChoices.length; i++) {
-      console.log(i + ': ' + nextQuestion[questionNum].answerChoices[i]);
-    }
-    var userAnswer = prompt('Please select the correct answer (just type the number). Or type "exit" to quit.', '');
-    checkAnswer(userAnswer);
   }
-
+  //Displays questions and answer choices in console
+  Question.prototype.displayQuestion = function() {
+    console.log(this.question);
+    for(var i=0; i<this.answers.length; i++) {
+      console.log(i + ': ' + this.answers[i]);
+    }
+  }
   //Checks to see if the answer is right or wrong
-  function checkAnswer(userAnswer) {
-    if(userAnswer == nextQuestion[questionNum].correctAnswer) {
-      score += 1
+  Question.prototype.checkAnswer = function(userAnswer, callback) {
+    var sc;
+    if(userAnswer === this.correctAnswer) {
       console.log('Correct answer!');
-      displayScore();
+      sc = callback(true);
       //Selects the next random question so that game never ends
-      questionNum = randomQuestionSelector();
-      prompter();
-    } else if(userAnswer === null) {
-      console.log('Please type "exit" to cancel this game.');
-      prompter();
-    } else if(userAnswer.toLowerCase() === 'exit') {
-      console.log('Game over!');
-      displayScore();
-    } else if (userAnswer != nextQuestion[questionNum].correctAnswer) {
+      n = randomNum();
+    } else {
       console.log('Wrong answer. Try again.');
-      displayScore();
-      prompter();
+      sc = callback(false);
     }
+    this.displayScore(sc);
   }
 
-  function displayScore() {
+  Question.prototype.displayScore = function(score) {
     console.log('Your current score is: ' + score);
     console.log('---------------------------------------------');
+
+  }
+
+  // Selects question at random
+  var n = randomNum();// question number selector
+  //Created a few questions using the function constructor, Question()
+  var nextQuestion, answers;
+  nextQuestion = [];
+
+  answers = ['Purple', 'Black', 'Blue', 'Green'];
+  nextQuestion[0] = new Question('What is the color of the afternoon sky?', answers, 2);
+
+  answers = ['Apple', 'Google', 'Samsung'];
+  nextQuestion[1] = new Question('What is the brand name of an iPhone?', answers, 0);
+
+  answers = [2, 30, 10, 16, 18];
+  nextQuestion[2] = new Question('What is the legal age to drive a car?', answers, 3);
+
+  answers = ['Whale', 'Dog', 'Snake', 'Mosquitoe', 'Goat'];
+  nextQuestion[3] = new Question('Which of the following is man\'s best friend?', answers, 1);
+
+  //Function to handle the scoring of the game
+  function score() {
+    var sc = 0;
+    return function(isCorrect) {
+      if(isCorrect) {
+        sc++;
+      }
+      return sc;
+    }
+  }
+
+  // Variable to initialize the score() function only once
+  var keepScore = score();
+
+  //Function to display prompt and the next random question
+  function prompter() {
+    nextQuestion[n].displayQuestion();
+    var userAnswer = prompt('Please select the correct answer (just type the number). Or type "exit" to quit.', '');
+
+    if(userAnswer == null) {
+      userAnswer = ''; // toLowerCase() will throw an exception if user clicks on the cancel button
+      console.log('Please enter "exit" to exit this game.')
+    }
+
+    if(userAnswer.toLowerCase() !== 'exit') {
+      nextQuestion[n].checkAnswer(parseInt(userAnswer), keepScore);
+      prompter();
+    }
   }
 
   //Generates a random number
-  function randomQuestionSelector() {
+  function randomNum() {
     return Math.floor(Math.random() * 4);
   }
+
+  //Let the game begin!
+  prompter();
 })();
